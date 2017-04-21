@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<% include header %>
+<body>
+	<% include navbar %>
+	<% function getAge(birth, date)
+		{
+			var ydate = date.getFullYear();
+			var mdate = date.getMonth();
+			var ddate = date.getDate();
+			var ybirth = birth.getFullYear();
+			var mbirth = birth.getMonth();
+			var dbirth = birth.getDate();
+			var age = ydate - ybirth;
+			if(mbirth > mdate) age--;
+			else
+			{
+				if(mbirth == mdate)
+				{
+					if(dbirth > ddate) age--;
+				}
+			}
+			return age;
+		}
+	%>
+	<div class="content">
+		<h2>Matcha</h2>
+		<p>
+			<center>
+				<div class="topvitrine">
+					<a href="/signup" style="border: none; text-shadow: none;">
+						<% if (users && users.length > 0) { %>
+							<% if (users[0]['image1']) { %>
+								<img src="<%= users[0]['login'] %>_1.png" width="300px" height="300px" />
+							<% } else { %>
+								<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="300px" height="300px" />
+							<% } %>
+							<div>
+								<% var d = new Date(users[0]['age']) %>
+								<strong style="font-size:18px"><%= users[0]['firstname'] %>, <%= getAge(d, new Date()) %> years</strong><br />
+								<strong style="font-size:16px">Bio:</strong><br />
+								<%= users[0]['bio'].substring(0, 255).replace(/\n/g, '<br />') %>...<br />
+							</div>
+						<% } %>
+					</a>
+				</div>
+				<div class="clear"></div>
+				<h1>
+					<a href="/signup" class="signup-button">
+						<span class="signup-button1"><<< Register Now >>></span>
+						<span class="signup-button2">>>> Register Now <<<</span>
+					</a>
+				</h1>
+				<% if (users && users.length > 1) { %>
+					<% for (var i = 1; i < users.length; i++) { %>
+						<div class="vitrine">
+							<a href="/signup">
+								<% if (users[i]['image1']) { %>
+									<img src="<%= users[i]['login'] %>_1.png" width="175px" height="175px" />
+								<% } else { %>
+									<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="175px" height="175px" />
+								<% } %><br />
+								<% var d = new Date(users[i]['age']) %>
+								<strong style="font-size:18px"><%= users[i]['firstname'] %>, <%= getAge(d, new Date()) %> years</strong><br />
+							</a>
+						</div>
+				<% } } %>
+			</center>
+		</p>
+	</div>
+
+	<% include footer %>
+</body>
+</html>

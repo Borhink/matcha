@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<% include header %>
+<body>
+	<% include navbar %>
+	<% function getAge(birth, date)
+		{
+			var ydate = date.getFullYear();
+			var mdate = date.getMonth();
+			var ddate = date.getDate();
+			var ybirth = birth.getFullYear();
+			var mbirth = birth.getMonth();
+			var dbirth = birth.getDate();
+			var age = ydate - ybirth;
+			if(mbirth > mdate) age--;
+			else
+			{
+				if(mbirth == mdate)
+				{
+					if(dbirth > ddate) age--;
+				}
+			}
+			return age;
+		}
+	%>
+	<script>
+		function sendTag(elem)
+		{
+			if (elem.elements["addtag"].value != "")
+			{
+				tag = elem.elements["addtag"].value.split(" ")[0];
+				socket.emit('addTag', { tag: tag});
+				var addli = document.createElement('li');
+				addli.id = 'tag_' + tag;
+				addli.innerHTML = '<input type="button" value="Delete" style="width:100px" onclick="rmTag(\'' + tag + '\');"> '
+								+ tag;
+				document.getElementById('tagList').appendChild(addli);
+				var addli2 = document.createElement('li');
+				addli2.id = 'viewTag_' + tag;
+				addli2.innerHTML = '<a href="#">'
+								 + tag
+								 + '</a>';
+				document.getElementById('viewTagList').appendChild(addli2);
+				tag = "";
+			}
+		}
+
+		function rmTag(tag)
+		{
+			socket.emit('rmTag', { tag: tag});
+			document.getElementById('tag_' + tag).remove();
+			document.getElementById('viewTag_' + tag).remove();
+		}
+
+		function writeTag(elem)
+		{
+			elem.elements["addtag"].value = elem.elements["addtag"].value.split(" ")[0];
+			if (elem.elements["addtag"].value)
+				socket.emit('writeTag', { tag: elem.elements["addtag"].value});
+		}
+
+		function selectTag(elem, value)
+		{
+			elem.elements["addtag"].value = value;
+		}
+
+		socket.on('writeTag', function (data) {
+			console.log(data);
+			var element = document.getElementById("choiseTag");
+			while (element.firstChild) {
+				  element.removeChild(element.firstChild);
+			}
+			for (var i in data) {
+    			if (data.hasOwnProperty(i)) {
+					var a = document.createElement('option');
+					a.value = data[i]['name'];
+					a.innerHTML = data[i]['name'];
+					element.appendChild(a);
+				}
+			}
+		});
+
+		var openFile = function(event, id) {
+			var input = event.target;
+
+			var reader = new FileReader();
+			reader.onload = function(){
+				var dataURL = reader.result;
+				socket.emit('uploadImg', { id: id, data: dataURL});
+			};
+			reader.readAsDataURL(input.files[0]);
+		};
+
+		socket.on('uploadImg', function (data) {
+			console.log(data);
+			var element = document.getElementById("image" + data['id']);
+			element.src = data['link'];
+			element.style.display = "inline-block";
+			var e1 = document.getElementById("file" + data['id']);
+			var e2 = document.getElementById("deleteFile" + data['id']);
+			e1.style.display = "none";
+			e2.style.display = "block";
+		});
+
+		var removeImg = function (id) {
+			var element = document.getElementById("image" +id);
+			var e1 = document.getElementById("file" + id);
+			var e2 = document.getElementById("deleteFile" + id);
+			socket.emit('deleteImg', { id: id});
+			e1.style.display = "block";
+			e2.style.display = "none";
+			if (id == 1)
+				element.src = "http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png";
+			else
+			{
+				element.src = "";
+				element.style.display = "none";
+			}
+		};
+	</script>
+	<div class="content">
+		<h2>My Profile</h2>
+		<center>
+			<div class="topvitrine">
+				<div class="img">
+					<% if (sess['image1']) { %>
+						<img src="<%= sess['login'] %>_1.png" id="image1" width="300px" height="300px" />
+					<% } else { %>
+						<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" id="image1" width="300px" height="300px" />
+					<% } %>
+					<br />
+					<% for(var i = 2; i <= 5; i++) { %>
+						<% if (sess['image' + i]) { %>
+							<img src="<%= sess['login'] %>_<%= i %>.png" id="image<%= i %>" width="75px" height="75px" />
+						<% } else {%>
+							<img src="" width="75px" height="75px" id="image<%= i %>" style="display:none;" />
+						<% } %>
+					<% } %>
+				</div>
+				<div id="view" style="display:block;">
+					<strong style="font-size:20px"><%= sess['firstname'] %></strong><br />
+					<strong><%= sess['lastname'] %></strong><br />
+					<strong>Birthday:</strong>
+					<% var d = new Date(sess['age']) %>
+					<%= d.getDate() %> / <%= d.getMonth() + 1 %> / <%= d.getFullYear() %> (<%= getAge(d, new Date()) %> years)
+					<br />
+					<strong>Gender:</strong> <%= sess['gender']%><br />
+					<strong>City:</strong> <%= sess['city']%><br />
+					<strong>Bio:</strong><br />
+					<%- sess['bio'].replace(/\n/g, '<br />') %><br />
+					<strong>Search:</strong> <%= sess['search']%><br />
+					<strong>Popularity:</strong><br />
+					<%= sess['score'] %><br />
+					<strong>Tags:</strong>
+					<ul id="viewTagList" style="list-style-type: none; margin:0px;">
+						<% if (tags) { for(var i=0; i<tags.length; i++) {%>
+						   <li id="viewTag_<%= tags[i]['name'] %>"><a href="#"><%= tags[i]['name'] %></a></li>
+						<% }} %>
+					</ul>
+					<br />
+					<input type="button" value="Edit" onclick="document.getElementById('view').style.display='none'; document.getElementById('edit').style.display='block';">
+				</div>
+				<form id="edit" action="#" method="post" class="signup" style="display:none;" enctype=”multipart/form-data”>
+					<strong style="font-size:20px">Account</strong><br />
+					<p>
+						Login:<br /> <%= sess['login'] %><br />
+						<br />Old password: <br />
+						<input type="password" name="oldpwd" value=""><br />
+						Password: <br />
+						<input type="password" name="pwd" value=""><br />
+						Confirm password: <br />
+						<input type="password" name="pwd2" value=""><br />
+						Mail: <br />
+						<input type="email" name="mail" value="<%= sess['mail'] %>"><br />
+					</p>
+					<hr style="width: 90%" />
+					<strong style="font-size:20px">Personnal</strong><br />
+					<p>
+						Picture: <br />
+						<% for(var i = 1; i <= 5; i++) { %>
+							<% if (sess['image' + i]) { %>
+								<input type="file" accept='image/*' onchange='openFile(event, <%= i %>)' id="file<%= i %>" style="display:none;">
+								<input type="button" value="Delete Picture:<%= i %>" id="deleteFile<%= i %>" onclick="removeImg(<%= i %>);" style="display:block;"><br />
+							<% } else {%>
+								<input type="file" accept='image/*' onchange='openFile(event, <%= i %>)' id="file<%= i %>" style="display:block;">
+								<input type="button" value="Delete Picture:<%= i %>" id="deleteFile<%= i %>" onclick="removeImg(<%= i %>);" style="display:none;"><br />
+							<% } %>
+						<% } %>
+
+						Firstname: <br />
+						<input type="text" name="firstname" value="<%= sess['firstname'] %>"><br />
+						Lastname: <br />
+						<input type="text" name="lastname" value="<%= sess['lastname'] %>"><br />
+						Gender: <br />
+						<input type="radio" name="gender" value="male" style="width:16px" <% if (sess['gender'] == 'male') { %> checked <% } %>> Male<br />
+		  				<input type="radio" name="gender" value="female" style="width:16px" <% if (sess['gender'] == 'female') { %> checked <% } %>> Female<br />
+						Birthday:<br />
+						<input type="date" name="bday" min="1916-12-31" max="2016-12-31" value="<%= d.getFullYear() %>-<% if(d.getMonth() + 1 < 10) { %>0<% } %><%= d.getMonth() + 1 %>-<% if(d.getDate() < 10) { %>0<% } %><%= d.getDate() %>"><br />
+						Bio:<br />
+						<textarea name="bio" rows="4" cols="50"><%- sess['bio'] %></textarea><br />
+						City: (City Name or/and ZIP Code)<br />
+						<input type="text" name="city" value="<%= sess['city'] %>"><br />
+					</p>
+					<hr style="width: 90%" />
+					<strong style="font-size:20px">Tag:</strong><br />
+					<p>
+						<ul id="tagList">
+							<% if (tags) { for(var i=0; i<tags.length; i++) {%>
+							   <li id="tag_<%= tags[i]['name'] %>"><input type="button" value="Delete" style="width:100px" onclick="rmTag('<%= tags[i]['name'] %>');"><%= tags[i]['name'] %></li>
+							<% }} %>
+						</ul>
+						<input type="text" name="addtag" value="" onpaste="this.oninput();" oninput="writeTag(this.form);"> <input type="button" value="Add Tags" style="width:100px" onclick="sendTag(this.form);">
+						<select id="choiseTag" onchange="selectTag(this.form, this.value);" onclick="this.onchange();" onkeypress="this.onchange();"></select>
+					</p>
+					<hr style="width: 90%" />
+					<strong style="font-size:20px">Search</strong><br />
+					<p>
+						Gender: <br />
+						<input type="radio" name="search" value="male" style="width:16px" <% if (sess['search'] == 'male') { %> checked <% } %>> Male<br />
+		  				<input type="radio" name="search" value="female" style="width:16px" <% if (sess['search'] == 'female') { %> checked <% } %>> Female<br />
+		  				<input type="radio" name="search" value="bi" style="width:16px"<% if (sess['search'] == 'bi') { %> checked <% } %>> Bi<br />
+					</p>
+					<hr style="width: 90%" />
+					<p style="text-align: center;">
+						<input type="submit" name="edit" value="Edit"> <input type="button" value="Back" onclick="document.getElementById('view').style.display='block'; document.getElementById('edit').style.display='none';">
+					</p>
+				</form>
+			</div>
+			<div class="clear"></div>
+		</center>
+		<h2>Connects Profile</h2>
+		<center>
+			<% if (connects) { for (var i = 0; i < connects.length; i++) { %>
+				<% var data = connects[i]; %>
+				<div class="vitrine">
+					<a href="/profile/<%= data['login'] %>" style="margin:10px;">
+						<% if (data['image1']) { %>
+							<img src="<%= data['login'] %>_1.png" width="200px" height="200px" />
+						<% } else { %>
+							<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="200px" height="200px" />
+						<% } %><br />
+						<% var d = new Date(data['age']) %>
+						<%= data['firstname'] %>, <%= getAge(d, new Date()) %> years (<%= data['city'] %>)
+					</a><br />
+					<input type="button" onclick="addChat('<%= data['login'] %>')" value="Send Message" />
+				</div>
+			<% } } %>
+		</center>
+		<h2>Liked Profile</h2>
+		<center>
+			<% if (likeds) { for (var i = 0; i < likeds.length; i++) { %>
+				<% var data = likeds[i]; %>
+				<div class="vitrine">
+					<a href="/profile/<%= data['login'] %>" style="margin:10px;">
+						<% if (data['image1']) { %>
+							<img src="<%= data['login'] %>_1.png" width="200px" height="200px" />
+						<% } else { %>
+							<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="200px" height="200px" />
+						<% } %><br />
+						<% var d = new Date(data['age']) %>
+						<%= data['firstname'] %>, <%= getAge(d, new Date()) %> years (<%= data['city'] %>)
+					</a><br />
+					<% if (data['connect']) { %>
+						<input type="button" onclick="addChat('<%= data['login'] %>')" value="Send Message" />
+					<% } %>
+				</div>
+			<% } } %>
+		</center>
+		<h2>Likers Profile</h2>
+		<center>
+			<% if (likers) { for (var i = 0; i < likers.length; i++) { %>
+				<% var data = likers[i]; %>
+				<div class="vitrine">
+					<a href="/profile/<%= data['login'] %>" style="margin:10px;">
+						<% if (data['image1']) { %>
+							<img src="<%= data['login'] %>_1.png" width="200px" height="200px" />
+						<% } else { %>
+							<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="200px" height="200px" />
+						<% } %><br />
+						<% var d = new Date(data['age']) %>
+						<%= data['firstname'] %>, <%= getAge(d, new Date()) %> years (<%= data['city'] %>)
+					</a><br />
+					<% if (data['connect']) { %>
+						<input type="button" onclick="addChat('<%= data['login'] %>')" value="Send Message" />
+					<% } %>
+				</div>
+			<% } } %>
+		</center>
+		<h2>Visitors Profile</h2>
+		<center>
+			<% if (visitors) { for (var i = 0; i < visitors.length; i++) { %>
+				<% var data = visitors[i]; %>
+				<div class="vitrine">
+					<a href="/profile/<%= data['login'] %>" style="margin:10px;">
+						<% if (data['image1']) { %>
+							<img src="<%= data['login'] %>_1.png" width="200px" height="200px" />
+						<% } else { %>
+							<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="200px" height="200px" />
+						<% } %><br />
+						<% var d = new Date(data['age']) %>
+						<%= data['firstname'] %>, <%= getAge(d, new Date()) %> years (<%= data['city'] %>)
+					</a><br />
+					<% if (data['connect']) { %>
+						<input type="button" onclick="addChat('<%= data['login'] %>')" value="Send Message" />
+					<% } %>
+				</div>
+			<% } } %>
+		</center>
+	</div>
+
+	<% include footer %>
+</body>
+</html>

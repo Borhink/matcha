@@ -1,0 +1,143 @@
+<ul class="topnav">
+	<li><a class="active" href="/">Home</a></li>
+	<!--<li><a href="/about">About</a></li>-->
+	<% if (typeof(sess) != 'undefined') { %>
+		<li><a href="/search">Search</a></li>
+		<li><a href="/profile">Profile</a></li>
+		<li><a href="/logout">Logout</a></li>
+	<% } else {%>
+		<li>
+			<div class="connect">
+				<form action="index" method="post">
+					<div>Login: <input type="text" name="login" value=""></div>
+					<div>Password: <input type="password" name="passwd" value=""></div>
+					<div><input type="submit" value="Sign In"></div>
+				</form>
+			</div>
+		</li>
+		<li><a href="/signup">Sign Up</a></li>
+		<li><a href="/reset">Forget Password</a></li>
+	<% } %>
+	<li class="icon">
+		<a href="javascript:void(0);" style="font-size:15px;" onclick="toggleMenu()">☰</a>
+	</li>
+</ul>
+<div class="notify" id="notify"></div>
+<% if (typeof(error) != 'undefined') {%>
+<p class="toperror" id="toperror">
+	<%= error %>
+	<a href="javascript:void(0);" style="font-size:17px;" onclick="document.getElementById('toperror').style.display='none';">x</a>
+</p>
+<% } %>
+<% if (typeof(valide) != 'undefined') {%>
+<p class="topvalide" id="topvalide">
+	<%= valide %>
+	<a href="javascript:void(0);" style="font-size:17px;" onclick="document.getElementById('topvalide').style.display='none';">x</a>
+</p>
+<% } %>
+<script>
+	var socket = io();
+	function toggleMenu() {
+	    document.getElementsByClassName("topnav")[0].classList.toggle("responsive");
+	}
+</script>
+
+<!-- ================= -->
+<!-- =   SOCKET IO   = -->
+<!-- ================= -->
+<% if (typeof(sess) != 'undefined') { %>
+	<script>
+		socket.on('msg', function (data) {
+			addMessage(data['to'], data['msg']);
+		});
+
+		socket.on('notify', function (data) {
+			var notify = document.getElementById('notify');
+			var pNotify = document.createElement('p');
+			pNotify.className = data['type'];
+			pNotify.innerHTML = data['msg']
+							  + '<div style="float: right; cursor: pointer;" onclick="this.parentNode.remove();">X</div>';
+
+			notify.insertBefore(pNotify, notify.firstChild);
+		});
+
+		function toggleElem(elem) {
+			if (!elem)
+				return;
+			if (elem.style.display == 'none')
+				elem.style.display = 'block';
+			else
+				elem.style.display = 'none';
+		}
+
+		function sendMsg(elem)
+		{
+			socket.emit('msg', { to: elem.elements["name"].value, msg: elem.elements["msg"].value});
+			elem.elements["msg"].value = "";
+		}
+
+		function addChat(name)
+		{
+			var elem = document.getElementById('chat' + name);
+			if (elem)
+			{
+				toggleElem(document.getElementById('chat' + name + '_op'));
+				return ;
+			}
+			var thechat = document.getElementById('thechat');
+			var divChat = document.createElement('div');
+			divChat.id = 'chat' + name;
+			divChat.className = 'chat';
+			divChat.innerHTML = '<div class="titlechat" id="chat' + name + '_title" onclick="toggleElem(document.getElementById(\'chat' + name + '_op\'));">'
+								+ name
+								+ '		<div style="float: right; cursor: pointer;" onclick="document.getElementById(\'chat' + name + '\').remove();">X</div>'
+								+ '</div>'
+								+ '<div class="openchat" style="display:none;" id="chat' + name + '_op">'
+								+ '	<FORM NAME="myform" onsubmit="sendMsg(this.form); return false;">'
+								+ '		<div class="contentchat" id="chat' + name + '_content"></div>'
+								+ '		<input type="text" name="msg" value="" style="width: 120px">'
+								+ '		<input type="hidden" name="name" value="' + name + '">'
+								+ '		<input type="button" value="Send" style="float: right;" onclick="sendMsg(this.form);javascript:void(0);">'
+								+ '	</FORM>'
+								+ '</div>';
+			thechat.insertBefore(divChat, thechat.firstChild);
+		}
+
+		function addMessage(name, message)
+		{
+			var elem = document.getElementById('chat' + name + '_content');
+			if (!elem)
+			{
+				addChat(name);
+				addMessage(name, message);
+			}
+			else
+			{
+				var divMsg = document.createElement('div');
+				divMsg.innerHTML = message;
+				elem.insertBefore(divMsg, elem.firstChild);
+			}
+		}
+		socket.on('isconnect', function (data) {
+			var elem = document.getElementById('chat' + data['name'] + '_title');
+			if (elem)
+			{
+				if (data['connect'] == 1)
+				{
+					elem.innerHTML = '<strong style="color: #2bb934;">' + data['name'] + '</strong>'
+						+ '		<div style="float: right; cursor: pointer;" onclick="document.getElementById(\'chat' + data['name'] + '\').remove();">X</div>';
+				}
+				else
+				{
+					elem.innerHTML = '<strong style="color: #b92b2b;">' + data['name'] + '</strong>'
+						+ '		<div style="float: right; cursor: pointer;" onclick="document.getElementById(\'chat' + data['name'] + '\').remove();">X</div>';
+				}
+			}
+		});
+	</script>
+
+	<!-- ================= -->
+	<!-- =     Chat      = -->
+	<!-- ================= -->
+	<div class="downnav" id="thechat"></div>
+<% } %>

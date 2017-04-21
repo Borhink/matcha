@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<title><%= title %></title>
+	<link rel='stylesheet' href="../style.css" />
+	<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+	<% include navbar %>
+	<% function getAge(birth, date)
+		{
+			var ydate = date.getFullYear();
+			var mdate = date.getMonth();
+			var ddate = date.getDate();
+			var ybirth = birth.getFullYear();
+			var mbirth = birth.getMonth();
+			var dbirth = birth.getDate();
+			var age = ydate - ybirth;
+			if(mbirth > mdate) age--;
+			else
+			{
+				if(mbirth == mdate)
+				{
+					if(dbirth > ddate) age--;
+				}
+			}
+			return age;
+		}
+	%>
+	<script>
+		function likeProfil(elem, id, likeMe, login)
+		{
+			socket.emit('like', { id: id });
+			if (elem.innerHTML.indexOf("Dislike") >= 0)
+			{
+				elem.innerHTML = "Like";
+				var e = document.getElementById("button_" + id);
+				if (e)
+					e.remove();
+			}
+			else
+			{
+				elem.innerHTML = "Dislike";
+				if (likeMe)
+				{
+					var connect = document.createElement("a");
+					connect.setAttribute("href", "javascript:void(0)");
+					connect.setAttribute("id", "button_" + id);
+					connect.setAttribute("onclick", "addChat('" + login + "')");
+					connect.setAttribute("style", "margin:10px;");
+					connect.appendChild(document.createTextNode("Send Message"));
+					var e = document.getElementById("block");
+					var parent = e.parentNode;
+					parent.insertBefore(connect, e);
+				}
+			}
+		}
+		function blockUser(type, id)
+		{
+			socket.emit('bloqueUser', { type: type, id: id });
+			if (type == "block")
+			{
+				var elem = document.getElementById("block");
+				if (elem.innerHTML.indexOf("Unblock") >= 0)
+					elem.innerHTML = "Block";
+				else
+					elem.innerHTML = "Unblock";
+			}
+			if (type == "report")
+			{
+				var elem = document.getElementById("report");
+				if (elem.innerHTML.indexOf("Del. Report") >= 0)
+					elem.innerHTML = "Report";
+				else
+					elem.innerHTML = "Del. Report";
+			}
+		}
+	</script>
+	<div class="content">
+		<h2>Profile: <%= username %>
+			<% if (data['likeMe'] == 1) { %>
+				(is liking you)
+			<% } %>
+		</h2>
+		<center>
+			<div class="topvitrine">
+				<div class="img">
+					<% if (data['image1']) { %>
+						<img src="../<%= data['login'] %>_1.png" id="image1" width="300px" height="300px" />
+					<% } else { %>
+						<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" id="image1" width="300px" height="300px" />
+					<% } %>
+					<br />
+					<% for(var i = 2; i <= 5; i++) { %>
+						<% if (data['image' + i]) { %>
+							<img src="<%= data['login'] %>_<%= i %>.png" id="image<%= i %>" width="75px" height="75px" />
+						<% } else {%>
+							<img src="" width="75px" height="75px" id="image<%= i %>" style="display:none;" />
+						<% } %>
+					<% } %>
+				</div>
+				<div id="view" style="display:block;">
+					<strong style="font-size:20px"><%= data['firstname'] %></strong><br />
+					<strong><%= data['lastname'] %></strong><br />
+					<strong>Last connexion:</strong>
+					<%
+					var last_conn = new Date(data['last_conn']);
+					if (new Date().getTime() - data['last_conn'] < 300000) { %>
+					Connected
+					<% }
+					else { %>
+					<%= last_conn.getDate() %> / <%= last_conn.getMonth() + 1 %> / <%= last_conn.getFullYear() %> -
+					<% if (last_conn.getHours() < 10) { %>0<% } %><%= last_conn.getHours() %>h<% if (last_conn.getMinutes() < 10) { %>0<% } %><%= last_conn.getMinutes() %>
+					<% } %>
+					<br />
+					<strong>Birthday:</strong>
+					<% var d = new Date(data['age']) %>
+					<%= d.getDate() %> / <%= d.getMonth() + 1 %> / <%= d.getFullYear() %> (<%= getAge(d, new Date()) %> years)
+					<br />
+					<strong>Gender:</strong> <%= data['gender']%><br />
+					<strong>City:</strong> <%= data['city']%><br />
+					<strong>Bio:</strong><br />
+					<%- data['bio'].replace(/\n/g, '<br />') %><br />
+					<strong>Search:</strong> <%= data['search']%><br />
+					<strong>Popularity:</strong><br />
+					<%= data['score'] %><br />
+					<strong>Tags:</strong>
+					<ul id="viewTagList" style="list-style-type: none; margin:0px;">
+						<% if (tags) { for(var i=0; i<tags.length; i++) {%>
+						   <li id="viewTag_<%= tags[i]['name'] %>"><a href="#"><%= tags[i]['name'] %></a></li>
+						<% }} %>
+					</ul>
+					<br />
+					<% if (sess['image1'] != null) { %>
+						<a href="javascript:void(0)" id="like" onclick="likeProfil(this, <%= data['id'] %>, <%= data['likeMe'] %>, '<%= data['login'] %>')" style="margin:10px;">
+							<% if (data['liked'] == 1) { %>
+								Dislike
+							<% } else { %>
+								Like
+							<% } %>
+						</a>
+					<% } %>
+					<% if (data['connect']) { %>
+						<a href="javascript:void(0)" id="button_<%= data['id'] %>" onclick="addChat('<%= data['login'] %>')" style="margin:10px;">Send Message</a>
+					<% } %>
+					<a href="javascript:void(0)" id="block" onclick="blockUser('block', '<%= data['id'] %>')" style="margin:10px;">
+						<% if (data['lock'] == 1) { %>
+							Unblock
+						<% } else { %>
+							Block
+						<% } %>
+					</a>
+					<a href="javascript:void(0)" id="report" onclick="blockUser('report', '<%= data['id'] %>')" style="margin:10px;">
+						<% if (data['report'] == 1) { %>
+							Del. Report
+						<% } else { %>
+							Report
+						<% } %>
+					</a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</center>
+	</div>
+
+	<% include footer %>
+</body>
+</html>

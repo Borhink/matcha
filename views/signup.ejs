@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<% include header %>
+<body>
+	<% include navbar %>
+
+	<div class="content">
+		<h2>Sign Up</h2>
+		<form action="#" method="post" class="signup" >
+			<h3>Account</h3>
+			<p>
+				Login*: <br />
+				<input type="text" name="login" value="<% if (typeof(data) != 'undefined') {%><%= data['login'] %><% } %>"><br />
+				Password*: <br />
+				<input type="password" name="pwd" value=""><br />
+				Confirm password*: <br />
+				<input type="password" name="pwd2" value=""><br />
+				Mail*: <br />
+				<input type="email" name="mail" value="<% if (typeof(data) != 'undefined') {%><%= data['mail'] %><% } %>"><br />
+			</p>
+			<hr style="width: 90%" />
+			<h3>Personnal</h3>
+			<p>
+				Firstname*: <br />
+				<input type="text" name="firstname" value="<% if (typeof(data) != 'undefined') {%><%= data['firstname'] %><% } %>"><br />
+				Lastname*: <br />
+				<input type="text" name="lastname" value="<% if (typeof(data) != 'undefined') {%><%= data['lastname'] %><% } %>"><br />
+				Gender*: <br />
+				<% if (typeof(data) != 'undefined' && data['gender'] == 'female') {%>
+					<input type="radio" name="gender" value="male" style="width:16px"> Male<br />
+	  				<input type="radio" name="gender" value="female" style="width:16px" checked> Female<br />
+				<% } else { %>
+					<input type="radio" name="gender" value="male" style="width:16px" checked> Male<br />
+	  				<input type="radio" name="gender" value="female" style="width:16px"> Female<br />
+				<% } %>
+				Birthday*:<br />
+				<input type="date" name="bday" min="1916-12-31" max="2016-12-31" value="<% if (typeof(data) != 'undefined') {%><%= data['bday'] %><% } %>"><br />
+				Bio:<br />
+				<textarea name="bio"><% if (typeof(data) != 'undefined') {%><%= data['bio'] %><% } %></textarea><br />
+				City*: (City Name or/and ZIP Code)<br />
+				<input type="text" name="city" value="<% if (typeof(data) != 'undefined') {%><%= data['city'] %><% } %>"><br />
+			</p>
+			<hr style="width: 90%" />
+			<h3>Search</h3>
+			<p>
+				Gender: <br />
+				<% if (typeof(data) != 'undefined' && data['search'] == 'male') {%>
+					<input type="radio" name="search" value="male" style="width:16px" checked> Male<br />
+	  				<input type="radio" name="search" value="female" style="width:16px"> Female<br />
+	  				<input type="radio" name="search" value="bi" style="width:16px"> Bi<br />
+				<% } else if (typeof(data) != 'undefined' && data['search'] == 'female') { %>
+					<input type="radio" name="search" value="male" style="width:16px"> Male<br />
+	  				<input type="radio" name="search" value="female" style="width:16px" checked> Female<br />
+	  				<input type="radio" name="search" value="bi" style="width:16px"> Bi<br />
+				<% } else { %>
+					<input type="radio" name="search" value="male" style="width:16px"> Male<br />
+	  				<input type="radio" name="search" value="female" style="width:16px"> Female<br />
+	  				<input type="radio" name="search" value="bi" style="width:16px" checked> Bi<br />
+				<% } %>
+			</p>
+			<hr style="width: 90%" />
+			<center><input type="submit" value="Sign Up"><center>
+		</form>
+	</div>
+	<% include footer %>
+</body>
+</html>

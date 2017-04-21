@@ -1,0 +1,337 @@
+body {
+	margin:0;
+	background-color: #D8D8D8;
+	color: #444;
+}
+
+ul.topnav {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+
+ul.topnav li {
+	float: left;
+}
+
+ul.topnav li a, ul.topnav li .connect div {
+  display: inline-block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+ul.topnav li a:hover{
+	background-color: #111;
+}
+
+ul.topnav li.icon {
+	display: none;
+	color: #f2f2f2;
+}
+
+p.toperror {
+	list-style-type: none;
+    margin: 0;
+    padding: 14px 16px;
+    overflow: hidden;
+    background-color: #b92b2b;
+    color: #f2f2f2;
+    position: fixed;
+	left: 0px;
+	top: 50px;
+    width: 100%;
+	box-shadow: 0px 5px 10px #734848;
+}
+
+p.toperror::before {
+  content: "ERROR: ";
+}
+
+p.toperror a {
+	color: #f2f2f2;
+	text-decoration: none;
+	float: right;
+	margin-right: 32px;
+}
+
+p.topvalide {
+	list-style-type: none;
+    margin: 0;
+    padding: 14px 16px;
+    overflow: hidden;
+    background-color: #2bb934;
+    color: #f2f2f2;
+    position: fixed;
+    left: 0;
+	top: 50px;
+    width: 100%;
+	box-shadow: 0px 5px 10px #408245;
+}
+
+p.topvalide a {
+	color: #f2f2f2;
+	text-decoration: none;
+	float: right;
+	margin-right: 32px;
+}
+
+.notify {
+    margin: 0;
+    overflow: hidden;
+    color: #f2f2f2;
+    position: fixed;
+    left: 0;
+	top: 40px;
+    width: 100%;
+}
+
+.notify .error {
+	padding: 14px 16px;
+	background-color: #b92b2b;
+	box-shadow: 0px 5px 10px #734848;
+}
+
+.notify .valide {
+	padding: 14px 16px;
+	background-color: #2bb934;
+	box-shadow: 0px 5px 10px #408245;
+}
+
+.content {
+	padding-left: 16px;
+	padding-right: 16px;
+	padding-top: 49px;
+	padding-bottom: 16px;
+}
+
+.content a {
+	text-decoration: none;
+	color: #393939;
+}
+
+.topvitrine {
+	max-width: 800px;
+	text-decoration: none;
+	text-align: left;
+}
+
+.topvitrine .img {
+	float: left;
+	margin-right: 14px;
+	margin-bottom: 16px;
+	text-align: center;
+}
+
+.tag, .topvitrine a {
+	cursor: pointer;
+}
+
+.topvitrine div a:hover {
+	text-shadow: 0px 0px 10px red;
+	border-top: 1px solid black;
+	border-bottom: 1px solid black;
+}
+
+.tag:hover {
+	color: #4052cc;
+}
+
+.clear {
+	clear: left;
+}
+
+.homevitrine {
+	display: inline-block;
+	text-decoration: none;
+	width: 300px;
+	margin-right: 14px;
+	margin-bottom: 16px;
+}
+
+.homevitrine img {
+	float: left;
+}
+
+.homevitrine div {
+	text-align: left;
+}
+
+.searchResult {
+	padding: 14px 16px;
+	width: 90%;
+	min-height: 200px;
+}
+
+.searchResult img {
+	float: left;
+}
+
+.searchResult div {
+	display: inline-block;
+	text-align: left;
+}
+
+.searchResult div a:hover {
+	text-shadow: 0px 0px 10px red;
+	border-top: 1px solid black;
+	border-bottom: 1px solid black;
+}
+
+.vitrine {
+	 display: inline-block;
+	 padding: 14px 16px;
+     text-decoration: none;
+	 text-align: center;
+}
+
+.vitrine a, .topvitrine a {
+  text-decoration: none;
+  color: #393939;
+}
+
+.signup input {
+	width: 300px;
+	margin-bottom: 5px;
+}
+
+.signup p {
+	margin-left: 10px;
+}
+
+.signup textarea {
+	width: 300px;
+	height: 100px;
+}
+
+.signup-button {
+	cursor: pointer;
+}
+
+.signup-button .signup-button2 {
+	display: none;
+	color: #4052cc;
+}
+
+.signup-button:hover .signup-button1 {
+	display: none;
+}
+
+.signup-button:hover .signup-button2 {
+	display: inline;
+}
+
+.downnav {
+	position: fixed;
+	bottom: 0px;
+	right: 0px;
+	width: 100%;
+	display: table-cell;
+}
+
+.downnav .chat {
+	display: inline-block;
+    vertical-align: bottom;
+	width: 200px;
+	margin-left: 2px;
+	margin-right: 2px;
+	margin-top: 4px;
+}
+
+.downnav .chat .titlechat {
+	height: 15px;
+	padding: 5px;
+	border: 1px solid black;
+	border-radius: 10px 10px;
+    background-color: #333;
+    color: #f2f2f2;
+}
+
+.downnav .chat .openchat {
+	height: 220px;
+	padding: 5px;
+	border: 1px solid black;
+	border-radius: 10px 10px;
+    background-color: #f2f2f2;
+    color: #333;
+	margin-top: 2px;
+}
+
+.downnav .chat .openchat .contentchat {
+	height: 198px;
+	margin-bottom: 2px;
+	overflow-y: scroll;
+}
+
+#tagList {
+  list-style-type: none;
+}
+
+footer {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+@media screen and (max-width:1002px) {
+  ul.topnav li:not(:first-child) {
+	  display: none;
+  }
+  ul.topnav li.icon {
+    float: right;
+    display: inline-block;
+  }
+}
+
+@media screen and (max-width:1002px) {
+  ul.topnav.responsive {
+	  position: fixed;
+  }
+  ul.topnav.responsive li.icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  ul.topnav.responsive li {
+    float: none;
+    display: inline;
+  }
+  ul.topnav.responsive li a, ul.topnav li .connect div {
+    display: block;
+    text-align: left;
+  }
+
+  ul.topnav li .connect {
+	  border-top: 1px solid #f2f2f2;
+  }
+}
+
+@media screen and (max-width:400px) {
+	.signup input, .signup textarea {
+	  width: 90%;
+	  max-width: 300px;
+	}
+}
+
+@media screen and (max-width:550px) {
+	.topvitrine img {
+		float: none;
+	}
+}

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<% include header %>
+<body>
+	<% include navbar %>
+	<% function getAge(birth, date)
+		{
+			var ydate = date.getFullYear();
+			var mdate = date.getMonth();
+			var ddate = date.getDate();
+			var ybirth = birth.getFullYear();
+			var mbirth = birth.getMonth();
+			var dbirth = birth.getDate();
+			var age = ydate - ybirth;
+			if(mbirth > mdate) age--;
+			else
+			{
+				if(mbirth == mdate)
+				{
+					if(dbirth > ddate) age--;
+				}
+			}
+			return age;
+		}
+	%>
+	<script>
+		var inversed = false;
+		var lastSort = "";
+		function sortBy(type)
+		{
+			if (lastSort == type)
+				inversed = !inversed;
+			else
+				inversed = false;
+			lastSort = type;
+			socket.emit('searchSort', { sort: type, users: <%- JSON.stringify(result) %> });
+		}
+
+		function likeProfil(elem, id, likeMe, login)
+		{
+			socket.emit('like', { id: id });
+			if (elem.innerHTML.indexOf("Dislike") >= 0)
+			{
+				elem.innerHTML = "Like";
+				var e = document.getElementById("button_" + id);
+				if (e)
+					e.remove();
+			}
+			else
+			{
+				elem.innerHTML = "Dislike";
+				if (likeMe)
+				{
+					var connect = document.createElement("a");
+					connect.setAttribute("href", "javascript:void(0)");
+					connect.setAttribute("id", "button_" + id);
+					connect.setAttribute("onclick", "addChat('" + login + "')");
+					connect.setAttribute("style", "margin:10px;");
+					connect.appendChild(document.createTextNode("Send Message"));
+					var e = document.getElementById("viewProfil_" + id);
+					var parent = e.parentNode;
+					parent.insertBefore(connect, e);
+				}
+			}
+		}
+
+		function getAge(birth, date)
+		{
+			var ydate = date.getFullYear();
+			var mdate = date.getMonth();
+			var ddate = date.getDate();
+			var ybirth = birth.getFullYear();
+			var mbirth = birth.getMonth();
+			var dbirth = birth.getDate();
+			var age = ydate - ybirth;
+			if(mbirth > mdate) age--;
+			else
+			{
+				if(mbirth == mdate)
+				{
+					if(dbirth > ddate) age--;
+				}
+			}
+			return age;
+		}
+
+		function addSearch(elem, data)
+		{
+			var e = document.createElement('div');
+			e.className = "searchResult";
+
+			var i = document.createElement('img');
+			i.setAttribute('width', '300px');
+			i.setAttribute('height', '300px');
+			if (data['image1'])
+				i.src = data['login'] + "_1.png";
+			else
+				i.src = "http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png";
+			e.appendChild(i);
+
+			var d = document.createElement('div');
+			d.setAttribute('style', 'margin-left:10px');
+			d.innerHTML = '<strong>' + data['firstname'] + ", " + getAge(new Date(data['age']), new Date()) + " years</strong><br />"
+						+ data['bio'].substring(0, 100).replace(/\n/g, '<br />') + "...<br />"
+						+ '<strong>Location:</strong><br />'
+						+ data['city'] + '<br />'
+						+ '<strong>Popularity:</strong><br />'
+						+ data['score'] + '<br />'
+						+ '<strong>Tags:</strong> (' + data['matchs'] + ' tag matched)<br />'
+						+ '...<br />'
+						+ '<br />';
+
+			var a0 = document.createElement('a');
+			a0.href = "javascript:void(0);";
+			a0.onclick= "likeProfil(this," + data['id'] +")";
+			a0.addEventListener("click", function() { likeProfil(this, data['id']) });
+			a0.style = "margin:10px;";
+			if (data['liked'] == 1) {
+				a0.innerHTML = "Dislike";
+			} else {
+				a0.innerHTML = "Like";
+			}
+			d.appendChild(a0);
+
+			var a1 = document.createElement('a');
+			a1.href = "/profile/" + data['login'];
+			a1.style = "margin:10px;";
+			a1.innerHTML = "View Profils";
+			d.appendChild(a1);
+			if (data['connect'] == 1)
+			{
+				var a2 = document.createElement('a');
+				a2.id = "button_" + data['id'];
+				a2.href = "javascript:void(0);";
+				a2.addEventListener("click", function() { addChat(data['login']) });
+				a2.style = "margin:10px;";
+				a2.innerHTML = "Send Message";
+				d.appendChild(a2);
+			}
+			e.appendChild(d);
+
+			elem.appendChild(e);
+
+			var c = document.createElement('div');
+			c.className = "clear";
+			elem.appendChild(c);
+
+			var h = document.createElement('hr');
+			h.style.width = "85%";
+			elem.appendChild(h);
+		}
+
+		socket.on('searchSort', function (data) {
+			var element = document.getElementById("searchResult");
+			while (element.firstChild) {
+				  element.removeChild(element.firstChild);
+			}
+			var size = 0;
+			for (var i in data) {
+				if (data.hasOwnProperty(i)) {
+					size++;
+				}
+			}
+			if (inversed)
+			{
+				for (var i = size - 1; i >= 0 ; i--)
+				{
+					addSearch(element, data[i]);
+				}
+			}
+			else
+			{
+				for (var i = 0; i < size; i++)
+				{
+					addSearch(element, data[i]);
+				}
+			}
+			element.removeChild(element.lastChild);
+		});
+	</script>
+
+	<div class="content">
+		<h2>Search</h2>
+		<div style="text-align:center">
+			<form action="search" method="post">
+				<strong>Search:</strong><br />
+				Age Interval:
+				<select name="ageInterval" style="margin-right:10px">
+					<option value="all" selected="true">All</option>
+					<option value="18-25">Between 18 and 25</option>
+					<option value="25-30">Between 25 and 30</option>
+					<option value="30-35">Between 30 and 35</option>
+					<option value="35-40">Between 35 and 40</option>
+					<option value="40-45">Between 40 and 45</option>
+					<option value="45-50">Between 45 and 50</option>
+					<option value="50-55">Between 50 and 55</option>
+					<option value="55-60">Between 55 and 60</option>
+					<option value="60-65">Between 60 and 65</option>
+					<option value="65-70">Between 65 and 70</option>
+					<option value="70-75">Between 70 and 75</option>
+					<option value="75-80">Between 75 and 80</option>
+					<option value="80-85">Between 80 and 85</option>
+					<option value="85-90">Between 85 and 90</option>
+					<option value="90-99">Between 90 and 99</option>
+				</select>
+				Location:
+				<select name="loc" style="margin-right:10px">
+					<option value="all" selected="true">All</option>
+					<option value="my">My Location</option>
+					<option value="25">Less than 25km</option>
+					<option value="50">Less than 50km</option>
+					<option value="75">Less than 75km</option>
+					<option value="100">Less than 100km</option>
+					<option value="150">Less than 150km</option>
+					<option value="200">Less than 200km</option>
+					<option value="300">Less than 350km</option>
+					<option value="400">Less than 400km</option>
+					<option value="500">Less than 500km</option>
+					<option value="+500">More than 500km</option>
+				</select>
+				Popularity Interval:
+				<select name="popularityInterval" style="margin-right:10px">
+					<option value="all" selected="true">All</option>
+					<option value="25">More than 25</option>
+					<option value="50">More than 50</option>
+					<option value="75">More than 75</option>
+					<option value="100">More than 100</option>
+					<option value="150">More than 150</option>
+					<option value="200">More than 200</option>
+					<option value="300">More than 300</option>
+					<option value="400">More than 400</option>
+					<option value="500">More than 500</option>
+				</select>
+				Tags:
+				<select name="tag" style="margin-right:10px">
+					<option value="all" selected="true">All</option>
+					<option value="1">>= 1 Common</option>
+					<option value="2">>= 2 Common</option>
+					<option value="3">>= 3 Common</option>
+					<option value="4">>= 4 Common</option>
+					<option value="5">>= 5 Common</option>
+					<option value="6">>= 6 Common</option>
+					<option value="7">>= 7 Common</option>
+					<option value="8">>= 8 Common</option>
+					<option value="9">>= 9 Common</option>
+				</select>
+				<br />
+				<input type="submit" name="buttom" value="Search" style="margin-top:5px; width:20%; min-width: 200px;">
+			</form>
+		</div>
+		<hr style="width:85%" />
+		<strong>Sort by:</strong> <a href="javascript:void(0);" onclick="sortBy('age')">Age</a>, <a href="javascript:void(0);" onclick="sortBy('location')">Location</a>, <a href="javascript:void(0);" onclick="sortBy('popularity')">Popularity</a>, <a href="javascript:void(0);" onclick="sortBy('tag')">Tags in common</a>.<br />
+		<br />
+		<div id="searchResult">
+			<% if (typeof(result) != 'undefined') { %>
+				<% for(var i=0; i < result.length; i++) {%>
+					<div class="searchResult">
+						<% if (result[i]['image1']) { %>
+							<img src="<%= result[i]['login'] %>_1.png" width="300px" height="300px" />
+						<% } else { %>
+							<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="300px" height="300px" />
+						<% } %>
+						<div style="margin-left:10px">
+							<% var d = new Date(result[i]['age']) %>
+							<strong><%= result[i]['firstname'] %>, <%= getAge(d, new Date()) %> years</strong><br />
+							<strong>Last connexion:</strong>
+							<%
+							var last_conn = new Date(result[i]['last_conn']);
+							if (new Date().getTime() - result[i]['last_conn'] < 300000) { %>
+							Connected
+							<% }
+							else { %>
+							<%= last_conn.getDate() %> / <%= last_conn.getMonth() + 1 %> / <%= last_conn.getFullYear() %> -
+							<% if (last_conn.getHours() < 10) { %>0<% } %><%= last_conn.getHours() %>h<% if (last_conn.getMinutes() < 10) { %>0<% } %><%= last_conn.getMinutes() %>
+							<% } %>
+							<br />
+							<%- result[i]['bio'].substring(0, 100).replace(/\n/g, '<br />') %>...<br />
+							<strong>Location:</strong><br />
+							<%= result[i]['city'] %><br />
+							<strong>Popularity:</strong><br />
+							<%= result[i]['score'] %><br />
+							<strong>Tags:</strong> (<%= result[i]['matchs'] %> tag matched)<br />
+							...<br />
+							<br />
+							<% if (sess['image1'] != null) { %>
+								<a href="javascript:void(0)" onclick="likeProfil(this, <%= result[i]['id'] %>, <%= result[i]['likeMe'] %>, '<%= result[i]['login'] %>')" style="margin:10px;">
+									<% if (result[i]['liked'] == 1) { %>
+										Dislike
+									<% } else { %>
+										Like
+									<% } %>
+								</a>
+							<% } %>
+							<% if (result[i]['connect']) { %>
+								<a href="javascript:void(0)" id="button_<%= result[i]['id'] %>" onclick="addChat('<%= result[i]['login'] %>')">Send Message</a>
+							<% } %>
+							<a href="/profile/<%= result[i]['login'] %>" id="viewProfil_<%= result[i]['id'] %>" style="margin:10px;">View Profils</a>
+						</div>
+					</div>
+					<div class="clear"></div>
+					<% if (i < result.length - 1) { %>
+						<hr style="width:85%" />
+				<% }} %>
+			<% } %>
+		</div>
+	</div>
+
+	<% include footer %>
+</body>
+</html>

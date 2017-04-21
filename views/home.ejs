@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<% include header %>
+<body>
+	<% include navbar %>
+	<% function getAge(birth, date)
+		{
+			var ydate = date.getFullYear();
+			var mdate = date.getMonth();
+			var ddate = date.getDate();
+			var ybirth = birth.getFullYear();
+			var mbirth = birth.getMonth();
+			var dbirth = birth.getDate();
+			var age = ydate - ybirth;
+			if(mbirth > mdate) age--;
+			else
+			{
+				if(mbirth == mdate)
+				{
+					if(dbirth > ddate) age--;
+				}
+			}
+			return age;
+		}
+	%>
+	<script>
+		socket.emit('loggedOn');
+		var inversed = false;
+		var lastSort = "";
+		function sortBy(type)
+		{
+			if (lastSort == type)
+				inversed = !inversed;
+			else
+				inversed = false;
+			lastSort = type;
+			socket.emit('homeSort', { sort: type });
+		}
+		function likeProfil(elem, id, likeMe, login)
+		{
+			socket.emit('like', { id: id });
+			if (elem.innerHTML.indexOf("Dislike") >= 0)
+			{
+				elem.innerHTML = "Like";
+				var e = document.getElementById("button_" + id);
+				if (e)
+					e.remove();
+			}
+			else
+			{
+				elem.innerHTML = "Dislike";
+				if (likeMe)
+				{
+					var connect = document.createElement("a");
+					connect.setAttribute("href", "javascript:void(0)");
+					connect.setAttribute("id", "button_" + id);
+					connect.setAttribute("onclick", "addChat('" + login + "')");
+					connect.setAttribute("style", "margin:10px;");
+					connect.appendChild(document.createTextNode("Send Message"));
+					var e = document.getElementById("viewProfil_" + id);
+					var parent = e.parentNode;
+					parent.insertBefore(connect, e);
+				}
+			}
+		}
+		function getAge(birth, date)
+		{
+			var ydate = date.getFullYear();
+			var mdate = date.getMonth();
+			var ddate = date.getDate();
+			var ybirth = birth.getFullYear();
+			var mbirth = birth.getMonth();
+			var dbirth = birth.getDate();
+			var age = ydate - ybirth;
+			if(mbirth > mdate) age--;
+			else
+			{
+				if(mbirth == mdate)
+				{
+					if(dbirth > ddate) age--;
+				}
+			}
+			return age;
+		}
+
+		function addSearch(elem, data)
+		{
+			var e = document.createElement('div');
+			e.className = "searchResult";
+
+			var i = document.createElement('img');
+			i.setAttribute('width', '200px');
+			i.setAttribute('height', '200px');
+			if (data['image1'])
+				i.src = data['login'] + "_1.png";
+			else
+				i.src = "http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png";
+			e.appendChild(i);
+
+			var d = document.createElement('div');
+			d.setAttribute('style', 'margin-left:10px');
+			d.innerHTML = '<strong>' + data['firstname'] + ", " + getAge(new Date(data['age']), new Date()) + " years</strong><br />"
+						+ data['bio'].substring(0, 100).replace(/\n/g, '<br />') + "...<br />"
+						+ '<strong>Location:</strong><br />'
+						+ data['city'] + '<br />'
+						+ '<strong>Popularity:</strong><br />'
+						+ data['score'] + '<br />'
+						+ '<strong>Tags:</strong> (' + data['matchs'] + ' tag matched)<br />'
+						+ '...<br />'
+						+ '<br />';
+
+			var a0 = document.createElement('a');
+			a0.href = "javascript:void(0);";
+			a0.addEventListener("click", function() { likeProfil(this, data['id']) });
+			a0.style = "margin:10px;";
+			if (data['liked'] == 1) {
+				a0.innerHTML = "Dislike";
+			} else {
+				a0.innerHTML = "Like";
+			}
+			d.appendChild(a0);
+
+			var a1 = document.createElement('a');
+			a1.href = "/profile/" + data['login'];
+			a1.style = "margin:10px;";
+			a1.innerHTML = "View Profils";
+			d.appendChild(a1);
+			if (data['connect'] == 1)
+			{
+				var a2 = document.createElement('a');
+				a2.id = "button_" + data['id'];
+				a2.href = "javascript:void(0);";
+				a2.addEventListener("click", function() { addChat(data['login']) });
+				a2.style = "margin:10px;";
+				a2.innerHTML = "Send Message";
+				d.appendChild(a2);
+			}
+			e.appendChild(d);
+
+			elem.appendChild(e);
+
+			var c = document.createElement('div');
+			c.className = "clear";
+			elem.appendChild(c);
+
+			var h = document.createElement('hr');
+			h.style.width = "85%";
+			elem.appendChild(h);
+		}
+		socket.on('homeSort', function (data) {
+			var element = document.getElementById("searchResult");
+			while (element.firstChild) {
+				  element.removeChild(element.firstChild);
+			}
+			var size = 0;
+			for (var i in data) {
+				if (data.hasOwnProperty(i)) {
+					size++;
+				}
+			}
+			var c = 0;
+			var min = data.length;
+			if (min > 10)
+				min = 10;
+			if (inversed)
+			{
+				for (var i = size - 1; i >= 0 ; i--)
+				{
+					if (c >= min)
+						break;
+					addSearch(element, data[i]);
+					c++;
+				}
+			}
+			else
+			{
+				for (var i = 0; i < size; i++)
+				{
+					if (c >= min)
+						break;
+					addSearch(element, data[i]);
+					c++;
+				}
+			}
+			element.removeChild(element.lastChild);
+		});
+	</script>
+	<div class="content">
+		<h2>Matchs</h2>
+		<strong>Sort by:</strong> <a href="javascript:void(0);" onclick="sortBy('age')">Age</a>, <a href="javascript:void(0);" onclick="sortBy('location')">Location</a>, <a href="javascript:void(0);" onclick="sortBy('popularity')">Popularity</a>, <a href="javascript:void(0);" onclick="sortBy('tag')">Tags in common</a>.<br />
+		<br />
+		<div id="searchResult">
+			<% var min = matchs ? matchs.length : 0; %>
+			<% if (min > 10) { min = 10 } %>
+			<% for(var i=0; i < min; i++) {%>
+				<div class="searchResult">
+					<% if (matchs[i]['image1']) { %>
+						<img src="<%= matchs[i]['login'] %>_1.png" width="200px" height="200px" />
+					<% } else { %>
+						<img src="http://drupalet.com/demo/drupal/do/sites/all/themes/do/images/unknown-avatar.png" width="200px" height="200px" />
+					<% } %>
+					<div style="margin-left:10px">
+						<% var d = new Date(matchs[i]['age']) %>
+						<strong><%= matchs[i]['firstname'] %>, <%= getAge(d, new Date()) %> years</strong><br />
+						<strong>Last connexion:</strong>
+						<%
+						var last_conn = new Date(matchs[i]['last_conn']);
+						if (new Date().getTime() - matchs[i]['last_conn'] < 300000) { %>
+						Connected
+						<% }
+						else { %>
+						<%= last_conn.getDate() %> / <%= last_conn.getMonth() + 1 %> / <%= last_conn.getFullYear() %> -
+						<% if (last_conn.getHours() < 10) { %>0<% } %><%= last_conn.getHours() %>h<% if (last_conn.getMinutes() < 10) { %>0<% } %><%= last_conn.getMinutes() %>
+						<% } %>
+						<br />
+						<%- matchs[i]['bio'].substring(0, 100).replace(/\n/g, '<br />') %>...<br />
+						<strong>Location:</strong><br />
+						<%= matchs[i]['city'] %><br />
+						<strong>Popularity:</strong><br />
+						<%= matchs[i]['score'] %><br />
+						<strong>Tags:</strong> (<%= matchs[i]['matchs'] %> tag matched)<br />
+						...<br />
+						<br />
+						<% if (sess['image1'] != null) { %>
+							<a href="javascript:void(0)" onclick="likeProfil(this, <%= matchs[i]['id'] %>, <%= matchs[i]['likeMe'] %>, '<%= matchs[i]['login'] %>')" style="margin:10px;">
+								<% if (matchs[i]['liked'] == 1) { %>
+									Dislike
+								<% } else { %>
+									Like
+								<% } %>
+							</a>
+						<% } %>
+						<% if (matchs[i]['connect']) { %>
+							<a href="javascript:void(0)" id="button_<%= matchs[i]['id'] %>" onclick="addChat('<%= matchs[i]['login'] %>')">Send Message</a>
+						<% } %>
+						<a href="/profile/<%= matchs[i]['login'] %>" id="viewProfil_<%= matchs[i]['id'] %>" style="margin:10px;">View Profils</a>
+					</div>
+				</div>
+				<% if (i < min - 1) { %>
+					<hr style="width:85%" />
+			<% }} %>
+		</div>
+	</div>
+
+	<% include footer %>
+</body>
+</html>
