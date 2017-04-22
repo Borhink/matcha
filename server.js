@@ -541,42 +541,46 @@ app.get('/profile/:username', function(req, res) {
 						Blacklist.isReported(result[0].id, req.session.user.id, conn, function (report) {
 							Blacklist.isLocked(result[0].id, req.session.user.id, conn, function (lock) {
 								Likes.isLiked(req.session.user.id, result[0].id, conn, function (likeMe) {
-									var dist = distance(req.session.user.latitude, req.session.user.longitude, result[0].latitude, result[0].longitude);
+									Users.isVisited(result[0].id, req.session.user.id, conn, function(visited) {
+										var dist = distance(req.session.user.latitude, req.session.user.longitude, result[0].latitude, result[0].longitude);
 
-									var userProfile = {
-										id: result[0].id,
-										login: result[0].login,
-										firstname: result[0].firstname,
-										lastname: result[0].lastname,
-										age: result[0].age,
-										gender: result[0].gender,
-										search: result[0].search,
-										bio: result[0].bio,
-										image1: result[0].image1,
-										image2: result[0].image2,
-										image3: result[0].image3,
-										image4: result[0].image4,
-										image5: result[0].image5,
-										score: result[0].score,
-										last_conn: result[0].last_conn,
-										city: result[0].city,
-										longitude: result[0].longitude,
-										latitude: result[0].latitude,
-										liked: liked,
-										dist: dist,
-										connect: connect,
-										report: report,
-										lock: lock,
-										likeMe: likeMe
-									};
-									Users.addVisit(userProfile.id, req.session.user.id, conn, function(err, result) {
-										Tags.getTagsById(userProfile.id, conn, function(ret) {
-											res.render('users', {
-												title: 'Matcha - Profile ' + userName,
-												username: userName,
-												sess: req.session.user,
-												data: userProfile,
-												tags: ret
+										var userProfile = {
+											id: result[0].id,
+											login: result[0].login,
+											firstname: result[0].firstname,
+											lastname: result[0].lastname,
+											age: result[0].age,
+											gender: result[0].gender,
+											search: result[0].search,
+											bio: result[0].bio,
+											image1: result[0].image1,
+											image2: result[0].image2,
+											image3: result[0].image3,
+											image4: result[0].image4,
+											image5: result[0].image5,
+											score: result[0].score,
+											last_conn: result[0].last_conn,
+											city: result[0].city,
+											longitude: result[0].longitude,
+											latitude: result[0].latitude,
+											liked: liked,
+											dist: dist,
+											connect: connect,
+											report: report,
+											lock: lock,
+											likeMe: likeMe,
+											visited: visited
+										};
+										Users.addVisit(userProfile.id, req.session.user.id, conn, function(err, result) {
+											Tags.getTagsById(userProfile.id, conn, function(ret) {
+												console.log(userProfile);
+												res.render('users', {
+													title: 'Matcha - Profile ' + userName,
+													username: userName,
+													sess: req.session.user,
+													data: userProfile,
+													tags: ret
+												});
 											});
 										});
 									});
@@ -790,26 +794,30 @@ io.on('connection', function (socket) {
 	socket.on('msg', function (data) {
 		if (!users[data['to']])
 			users[data['to']] = {login: data['to'], id: null, socket: null, chat: []};
-		if (users[data['to']]['socket'] != null)
-		{
-			users[data['to']]['socket'].emit('msg', { to: userSession.login, msg: '<strong>' + userSession.login + ': </strong>' + entities.encode(data['msg'])});
-			socket.emit('isconnect', { name: data['to'], connect: 1});
-		}
-		else
-		{
-			socket.emit('isconnect', { name: data['to'], connect: 0});
-			Notification.addMessage(userSession.login, data['to'], entities.encode(data['msg']), conn, function(ret) {
-			});
-		}
+		Likes.areConnected(users[data['to']]['id'], userSession.id, conn, function(connect) {
+			if (connect)
+			{
+				if (users[data['to']]['socket'] != null)
+				{
+					users[data['to']]['socket'].emit('msg', { to: userSession.login, msg: '<strong>' + userSession.login + ': </strong>' + entities.encode(data['msg'])});
+					socket.emit('isconnect', { name: data['to'], connect: 1});
+				}
+				else
+				{
+					socket.emit('isconnect', { name: data['to'], connect: 0});
+					Notification.addMessage(userSession.login, data['to'], entities.encode(data['msg']), conn, function(ret) {
+					});
+				}
 
-		socket.emit('msg', { to: data['to'], msg: '<strong>You: </strong>' + entities.encode(data['msg'])});
-		users[data['to']]['chat'].push({ to: userSession.login, msg: '<strong>' + userSession.login + ': </strong>' + entities.encode(data['msg'])});
-		users[userSession.login]['chat'].push({ to: data['to'], msg: '<strong>You: </strong>' + entities.encode(data['msg'])});
-		if (users[data['to']]['chat'].length > 30)
-			users[data['to']]['chat'].shift();
-		if (users[userSession.login]['chat'].length > 30)
-		 	users[userSession.login]['chat'].shift();
-
+				socket.emit('msg', { to: data['to'], msg: '<strong>You: </strong>' + entities.encode(data['msg'])});
+				users[data['to']]['chat'].push({ to: userSession.login, msg: '<strong>' + userSession.login + ': </strong>' + entities.encode(data['msg'])});
+				users[userSession.login]['chat'].push({ to: data['to'], msg: '<strong>You: </strong>' + entities.encode(data['msg'])});
+				if (users[data['to']]['chat'].length > 30)
+					users[data['to']]['chat'].shift();
+				if (users[userSession.login]['chat'].length > 30)
+				 	users[userSession.login]['chat'].shift();
+			}
+		});
 	});
 
 	socket.on('addTag', function (data) {
@@ -893,24 +901,8 @@ io.on('connection', function (socket) {
 			var toUserName;
 			if (usernames[data['id']])
 				toUserName = usernames[data['id']]['login'];
-			Likes.isLiked(data['id'], userSession.id, conn, function(ret) {
-				if (toUserName && users[toUserName] && users[toUserName]['socket']) // Send direct Notify
-				{
-					if (!ret)
-						users[toUserName]['socket'].emit('notify', { type: "valide", msg: userSession.login + ", likes you"});
-					else
-						users[toUserName]['socket'].emit('notify', { type: "error", msg: userSession.login + ", dislikes you"});
-				}
-				else
-				{
-					if (!ret)
-						Notification.addNotification(data['id'], userSession.login + ", likes you", "valide", conn, function(ret) {
-						});
-					else
-						Notification.addNotification(data['id'], userSession.login + ", dislikes you", "error", conn, function(ret) {
-						});
-				}
-				if (!ret)
+			Likes.isLiked(data['id'], userSession.id, conn, function(isLiked) {
+				if (!isLiked)
 					Likes.addLike(data['id'], userSession.id, conn, function(newScore) {
 						if (newScore)
 							userSession["score"] = newScore;
@@ -920,6 +912,39 @@ io.on('connection', function (socket) {
 						if (newScore)
 							userSession["score"] = newScore;
 					});
+				Blacklist.isLocked(userSession.id, data['id'], conn, function(isBlocked) {
+					if (!isBlocked)
+					{
+						Likes.isLiked(userSession.id, data['id'], conn, function(isLiking) {
+							if (toUserName && users[toUserName] && users[toUserName]['socket'])
+							{
+								if (!isLiked && !isLiking)
+									users[toUserName]['socket'].emit('notify', { type: "valide", msg: userSession.login + ", likes you"});
+								else if (!isLiked && isLiking)
+									users[toUserName]['socket'].emit('notify', { type: "valide", msg: userSession.login + ", likes you too (you are connected)"});
+								else if (isLiked && !isLiking)
+									users[toUserName]['socket'].emit('notify', { type: "error", msg: userSession.login + ", dislikes you"});
+								else
+									users[toUserName]['socket'].emit('notify', { type: "error", msg: userSession.login + ", dislikes you (you are disconnected)"});
+							}
+							else
+							{
+								if (!isLiked && !isLiking)
+									Notification.addNotification(data['id'], userSession.login + ", likes you", "valide", conn, function(ret) {
+									});
+								else if (!isLiked && isLiking)
+									Notification.addNotification(data['id'], userSession.login + ", likes you too (you are connected)", "valide", conn, function(ret) {
+									});
+								else if (isLiked && !isLiking)
+									Notification.addNotification(data['id'], userSession.login + ", dislikes you", "error", conn, function(ret) {
+									});
+								else
+									Notification.addNotification(data['id'], userSession.login + ", dislikes you (you are disconnected)", "error", conn, function(ret) {
+									});
+							}
+						});
+					}
+				});
 			});
 		}
 	});
@@ -968,6 +993,28 @@ io.on('connection', function (socket) {
 						Blacklist.addReport(data['id'], userSession.id, conn, function(ret) {});
 				});
 			}
+		}
+	});
+
+	socket.on('newVisit', function (data) {
+		if (userSession)
+		{
+			console.log(data);
+			var toUserName;
+			if (usernames[data['id']])
+				toUserName = usernames[data['id']]['login'];
+			Blacklist.isLocked(userSession.id, data['id'], conn, function(isBlocked) {
+				if (!isBlocked)
+				{
+					if (toUserName && users[toUserName] && users[toUserName]['socket'])
+					{
+						users[toUserName]['socket'].emit('notify', { type: "valide", msg: userSession.login + ", visited your profile"});
+					}
+					else
+						Notification.addNotification(data['id'], userSession.login + ", visited your profile", "valide", conn, function(ret) {
+						});
+				}
+			});
 		}
 	});
 });

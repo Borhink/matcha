@@ -31,6 +31,8 @@
 		}
 	%>
 	<script>
+		if ( <%= data['visited'] %> != true)
+			socket.emit('newVisit', { id: <%= data['id'] %> });
 		function likeProfil(elem, id, likeMe, login)
 		{
 			socket.emit('like', { id: id });
@@ -96,7 +98,7 @@
 					<br />
 					<% for(var i = 2; i <= 5; i++) { %>
 						<% if (data['image' + i]) { %>
-							<img src="<%= data['login'] %>_<%= i %>.png" id="image<%= i %>" width="75px" height="75px" />
+							<img src="../<%= data['login'] %>_<%= i %>.png" id="image<%= i %>" width="75px" height="75px" />
 						<% } else {%>
 							<img src="" width="75px" height="75px" id="image<%= i %>" style="display:none;" />
 						<% } %>

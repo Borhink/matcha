@@ -141,6 +141,7 @@ var	getAllVisitors = function(myUser, conn, callback)
 };
 
 exports.addVisit = addVisit;
+exports.isVisited = isVisited;
 exports.getUserById = getUserById;
 exports.getUsersList = getUsersList;
 exports.userExist = userExist;
